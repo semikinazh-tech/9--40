@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Зельеварение · Тёмная Магия</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    font-family: 'Georgia', serif;
+    background: radial-gradient(ellipse at center, #0a2a1a 0%, #000 70%);
+    color: #a8ffc9;
+    overflow: hidden;
+    user-select: none;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(2px 2px at 20% 30%, #00ff88, transparent),
+      radial-gradient(1px 1px at 70% 60%, #00ffaa, transparent),
+      radial-gradient(1.5px 1.5px at 40% 80%, #00ff66, transparent),
+      radial-gradient(1px 1px at 85% 20%, #00ffcc, transparent),
+      radial-gradient(2px 2px at 10% 70%, #00ff99, transparent);
+    background-size: 300px 300px;
+    opacity: 0.4;
+    pointer-events: none;
+    animation: twinkle 6s infinite alternate;
+  }
+  @keyframes twinkle { from {opacity:.2} to {opacity:.5} }
+
+  .game {
+    position: relative;
+    width: 100%; height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center;
+    padding: 15px;
+  }
+
+  header {
+    text-align: center;
+    width: 100%;
+    z-index: 10;
+  }
+  h1 {
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: #00ff9d;
+    text-shadow: 0 0 10px #00ff9d, 0 0 20px #00aa66, 0 0 30px #006644;
+    margin-bottom: 6px;
+  }
+  .stats {
+    display: flex; justify-content: center; gap: 30px;
+    font-size: 16px;
+    color: #7fffb0;
+    text-shadow: 0 0 8px #00ff9d;
+  }
+  .stats span { font-weight: bold; color: #00ffcc; }
+
+  .task {
+    margin-top: 10px;
+    padding: 12px 20px;
+    max-width: 800px;
+    background: rgba(0, 40, 20, 0.7);
+    border: 1px solid #00ff9d;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 255, 157, 0.4), inset 0 0 20px rgba(0, 255, 157, 0.1);
+    font-size: 15px;
+    line-height: 1.5;
+    text-align: center;
+    backdrop-filter: blur(4px);
+  }
+  .task b { color: #00ffcc; text-shadow: 0 0 6px #00ff9d; }
+  .task .hint { color: #88ddaa; font-size: 13px; margin-top: 4px; font-style: italic; }
+
+  .input-area {
+    margin-top: 12px;
+    display: flex; gap: 10px;
+    z-index: 10;
+  }
+  #answer {
+    width: 360px;
+    padding: 10px 16px;
+    font-size: 17px;
+    background: rgba(0, 20, 10, 0.8);
+    border: 2px solid #00ff9d;
+    border-radius: 8px;
+    color: #00ffcc;
+    outline: none;
+    font-family: 'Georgia', serif;
+    box-shadow: 0 0 10px rgba(0, 255, 157, 0.5), inset 0 0 10px rgba(0, 255, 157, 0.2);
+    transition: all .2s;
+  }
+  #answer:focus {
+    border-color: #00ffcc;
+    box-shadow: 0 0 20px #00ff9d, inset 0 0 15px rgba(0, 255, 157, 0.3);
+  }
+  #submit {
+    padding: 10px 22px;
+    font-size: 16px;
+    background: linear-gradient(135deg, #00aa66, #00ff9d);
+    border: none;
+    border-radius: 8px;
+    color: #001a0d;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 2px;
+    box-shadow: 0 0 15px #00ff9d;
+    transition: all .2s;
+  }
+  #submit:hover { transform: scale(1.05); box-shadow: 0 0 25px #00ffcc; }
+
+  /* Котёл */
+  .cauldron-wrap {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 320px;
+    height: 260px;
+    z-index: 5;
+  }
+  .cauldron {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    height: 200px;
+    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+    border-radius: 0 0 50% 50% / 0 0 60% 60%;
+    border: 3px solid #2a2a2a;
+    box-shadow:
+      inset 0 -20px 40px rgba(0, 255, 157, 0.3),
+      0 10px 30px rgba(0,0,0,0.8),
+      0 0 40px rgba(0, 255, 157, 0.2);
+  }
+  .cauldron::before {
+    content: '';
+    position: absolute;
+    top: -15px; left: -10px;
+    width: 300px; height: 30px;
+    background: linear-gradient(180deg, #333, #111);
+    border-radius: 50%;
+    border: 2px solid #444;
+  }
+  .liquid {
+    position: absolute;
+    top: 10px; left: 10px; right: 10px;
+    height: 60px;
+    background: radial-gradient(ellipse at top, #00ff9d 0%, #00aa66 40%, #004d2e 100%);
+    border-radius: 50%;
+    box-shadow:
+      0 0 30px #00ff9d,
+      inset 0 -10px 20px rgba(0,0,0,0.5);
+    animation: liquidGlow 2s infinite alternate;
+  }
+  @keyframes liquidGlow {
+    from { box-shadow: 0 0 20px #00ff9d, inset 0 -10px 20px rgba(0,0,0,0.5); }
+    to   { box-shadow: 0 0 50px #00ffcc, 0 0 80px #00ff9d, inset 0 -10px 20px rgba(0,0,0,0.5); }
+  }
+
+  /* Пузырьки */
+  .bubbles {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 100px;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .bubble {
+    position: absolute;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 30%, #ccffdd, #00ff9d 60%, transparent);
+    border-radius: 50%;
+    opacity: 0.8;
+    animation: rise linear infinite;
+    box-shadow: 0 0 8px #00ff9d;
+  }
+  @keyframes rise {
+    0%   { transform: translateY(0) scale(0.5); opacity: 0; }
+    20%  { opacity: 0.9; }
+    100% { transform: translateY(-180px) scale(1.2); opacity: 0; }
+  }
+
+  /* Пар */
+  .steam {
+    position: absolute;
+    top: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 200px; height: 100px;
+    pointer-events: none;
+  }
+  .steam-puff {
+    position: absolute;
+    bottom: 0;
+    width: 40px; height: 40px;
+    background: radial-gradient(circle, rgba(0,255,157,0.4), transparent 70%);
+    border-radius: 50%;
+    animation: steam 4s infinite;
+  }
+  @keyframes steam {
+    0%   { transform: translateY(0) scale(0.5); opacity: 0; }
+    30%  { opacity: 0.6; }
+    100% { transform: translateY(-120px) scale(2); opacity: 0; }
+  }
+
+  /* Падающее словосочетание */
+  .falling {
+    position: absolute;
+    left: 50%;
+    top: 20%;
+    transform: translateX(-50%);
+    padding: 8px 18px;
+    background: rgba(0, 40, 20, 0.9);
+    border: 2px solid #00ffcc;
+    border-radius: 8px;
+    color: #00ffcc;
+    font-size: 18px;
+    font-weight: bold;
+    text-shadow: 0 0 8px #00ff9d;
+    box-shadow: 0 0 20px #00ff9d;
+    animation: fall 1.2s ease-in forwards;
+    z-index: 20;
+    pointer-events: none;
+  }
+  @keyframes fall {
+    0%   { top: 20%; opacity: 1; transform: translateX(-50%) scale(1); }
+    80%  { opacity: 1; }
+    100% { top: 60%; opacity: 0; transform: translateX(-50%) scale(0.3); }
+  }
+
+  /* Взрыв */
+  .explosion {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 10px; height: 10px;
+    pointer-events: none;
+    z-index: 30;
+  }
+  .particle {
+    position: absolute;
+    width: 8px; height: 8px;
+    background: #ff3355;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #ff0033, 0 0 20px #ff6600;
+    animation: explode 1s ease-out forwards;
+  }
+  @keyframes explode {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+  }
+
+  /* Тряска */
+  .shake { animation: shake 0.5s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    10%,30%,50%,70%,90% { transform: translateX(-10px); }
+    20%,40%,60%,80% { transform: translateX(10px); }
+  }
+
+  /* Финальный экран */
+  .end-screen {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.9);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    text-align: center;
+  }
+  .end-screen h2 {
+    font-size: 48px;
+    color: #00ff9d;
+    text-shadow: 0 0 20px #00ff9d, 0 0 40px #00aa66;
+    margin-bottom: 20px;
+    letter-spacing: 6px;
+  }
+  .end-screen p { font-size: 22px; color: #a8ffc9; margin-bottom: 30px; }
+  .end-screen button {
+    padding: 14px 40px;
+    font-size: 18px;
+    background: linear-gradient(135deg, #00aa66, #00ff9d);
+    border: none;
+    border-radius: 10px;
+    color: #001a0d;
+    font-weight: bold;
+    letter-spacing: 3px;
+    cursor: pointer;
+    box-shadow: 0 0 20px #00ff9d;
+  }
+
+  .feedback {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 32px;
+    font-weight: bold;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 40;
+  }
+  .feedback.show { animation: feedbackAnim 1.2s ease-out; }
+  .feedback.good { color: #00ffcc; text-shadow: 0 0 20px #00ff9d; }
+  .feedback.bad  { color: #ff3355; text-shadow: 0 0 20px #ff0033; }
+  @keyframes feedbackAnim {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    30%  { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
+  }
+</style>
+</head>
+<body>
+<div class="game" id="game">
+  <header>
+    <h1>⚗ ЗЕЛЬЕВАРЕНИЕ ⚗</h1>
+    <div class="stats">
+      <div>Зелье: <span id="score">0</span> / <span id="total">40</span></div>
+      <div>Прогресс: <span id="progress">1</span> / 40</div>
+    </div>
+  </header>
+
+  <div class="task" id="task"></div>
+
+  <div class="input-area">
+    <input type="text" id="answer" placeholder="Введите словосочетание..." autocomplete="off">
+    <button id="submit">В КОТЁЛ ✨</button>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+
+  <div class="cauldron-wrap">
+    <div class="steam" id="steam"></div>
+    <div class="cauldron">
+      <div class="liquid"></div>
+      <div class="bubbles" id="bubbles"></div>
+    </div>
+  </div>
+</div>
+
+<div class="end-screen" id="endScreen">
+  <h2>✨ ЗЕЛЬЕ ГОТОВО ✨</h2>
+  <p id="endText">Вы сварили магическое зелье!</p>
+  <button onclick="location.reload()">Сварить ещё</button>
+</div>
+
+<script>
+// 40 заданий из ОБЗ_Задание_9 (раздел I: СОГЛАСОВАНИЕ → УПРАВЛЕНИЕ)
+// Ответы — из ключей ФИПИ (все допустимые варианты)
+const tasks = [
+  {n:1,  q:"«лесные тропинки» (согласование) → управление",
+   a:["тропинки леса","тропинки в лесу","леса тропинки","в лесу тропинки"]},
+  {n:2,  q:"«хрустальная ваза» (согласование) → управление",
+   a:["ваза из хрусталя","из хрусталя ваза"]},
+  {n:3,  q:"«школьные будни» (согласование) → управление",
+   a:["будни школы","будни в школе","школы будни","в школе будни"]},
+  {n:4,  q:"«железный рычаг» (согласование) → управление",
+   a:["рычаг из железа","из железа рычаг"]},
+  {n:5,  q:"«культурные ценности» (согласование) → управление",
+   a:["ценности культуры","культуры ценности"]},
+  {n:6,  q:"«танцевальный кружок» (согласование) → управление",
+   a:["кружок танцев","танцев кружок"]},
+  {n:7,  q:"«человеческая жизнь» (согласование) → управление",
+   a:["жизнь человека","человека жизнь","жизнь людей","людей жизнь"]},
+  {n:8,  q:"«деревянный шкаф» (согласование) → управление",
+   a:["шкаф из дерева","из дерева шкаф"]},
+  {n:9,  q:"«вечерняя прохлада» (согласование) → управление",
+   a:["прохлада вечера","вечера прохлада"]},
+  {n:10, q:"«деревянные сиденья» (согласование) → управление",
+   a:["сиденья из дерева","из дерева сиденья"]},
+  {n:11, q:"«детская книга» (согласование) → управление",
+   a:["книга для детей","для детей книга"]},
+  {n:12, q:"«бумажные голуби» (согласование) → управление",
+   a:["голуби из бумаги","из бумаги голуби"]},
+  {n:13, q:"«фарфоровые цветы» (согласование) → управление",
+   a:["цветы из фарфора","из фарфора цветы"]},
+  {n:14, q:"«студенческий хор» (согласование) → управление",
+   a:["хор студентов","студентов хор","хор из студентов","из студентов хор"]},
+  {n:15, q:"«стариковский голос» (согласование) → управление",
+   a:["голос старика","старика голос"]},
+  {n:16, q:"«шмелиное жужжание» (согласование) → управление",
+   a:["жужжание шмеля","шмеля жужжание","жужжание шмелей","шмелей жужжание"]},
+  {n:17, q:"«юношеское сердце» (согласование) → управление",
+   a:["сердце юноши","юноши сердце"]},
+  {n:18, q:"«жестяная коробка» (согласование) → управление",
+   a:["коробка из жести","из жести коробка"]},
+  {n:19, q:"«бумажные пакеты» (согласование) → управление",
+   a:["пакеты из бумаги","из бумаги пакеты"]},
+  {n:20, q:"«душевное превосходство» (согласование) → управление",
+   a:["превосходство души","души превосходство"]},
+  {n:21, q:"«стеклянная банка» (согласование) → управление",
+   a:["банка из стекла","из стекла банка"]},
+  {n:22, q:"«домашнее задание» (согласование) → управление",
+   a:["задание на дом","на дом задание"]},
+  {n:23, q:"«бетонная стена» (согласование) → управление",
+   a:["стена из бетона","из бетона стена"]},
+  {n:24, q:"«книжный шкаф» (согласование) → управление",
+   a:["шкаф для книг","для книг шкаф"]},
+  {n:25, q:"«радостный крик» (согласование) → управление",
+   a:["крик радости","радости крик"]},
+  {n:26, q:"«детские игрушки» (согласование) → управление",
+   a:["игрушки детей","игрушки для детей"]},
+  {n:27, q:"«степные метели» (согласование) → управление",
+   a:["метели в степи","в степи метели"]},
+  {n:28, q:"«музейные архивы» (согласование) → управление",
+   a:["архивы музея","музея архивы","архивы музеев","музеев архивы"]},
+  {n:29, q:"«заводская стена» (согласование) → управление",
+   a:["стена завода","завода стена"]},
+  {n:30, q:"«городские сады» (согласование) → управление",
+   a:["сады города","города сады","сады в городе","в городе сады"]},
+  {n:31, q:"«стеклянная рамка» (согласование) → управление",
+   a:["рамка из стекла","из стекла рамка"]},
+  {n:32, q:"«книжная полка» (согласование) → управление",
+   a:["полка книг","книг полка","полка для книг","для книг полка","полка с книгами","с книгами полка"]},
+  {n:33, q:"«деревянная тумбочка» (согласование) → управление",
+   a:["тумбочка из дерева","из дерева тумбочка"]},
+  {n:34, q:"«рыбная ловля» (согласование) → управление",
+   a:["ловля рыбы","рыбы ловля"]},
+  {n:35, q:"«пшеничные зёрна» (согласование) → управление",
+   a:["зёрна пшеницы","пшеницы зёрна"]},
+  {n:36, q:"«деревянный дом» (согласование) → управление",
+   a:["дом из дерева","из дерева дом"]},
+  {n:37, q:"«глиняная посуда» (согласование) → управление",
+   a:["посуда из глины","из глины посуда"]},
+  {n:38, q:"«диванная подушка» (согласование) → управление",
+   a:["подушка дивана","дивана подушка","подушка для дивана","для дивана подушка"]},
+  {n:39, q:"«родительский дом» (согласование) → управление",
+   a:["дом родителей","родителей дом"]},
+  {n:40, q:"«пуховый платок» (согласование) → управление",
+   a:["платок из пуха","из пуха платок"]}
+];
+
+let current = 0;
+let score = 0;
+const taskEl = document.getElementById('task');
+const answerEl = document.getElementById('answer');
+const scoreEl = document.getElementById('score');
+const progressEl = document.getElementById('progress');
+const feedbackEl = document.getElementById('feedback');
+const gameEl = document.getElementById('game');
+
+function showTask() {
+  if (current >= tasks.length) {
+    endGame();
+    return;
+  }
+  const t = tasks[current];
+  taskEl.innerHTML = `<b>Задание ${t.n}.</b> Замените словосочетание <b>${t.q}</b>.<div class="hint">Введите полученное словосочетание</div>`;
+  progressEl.textContent = current + 1;
+  answerEl.value = '';
+  answerEl.focus();
+}
+
+function normalize(s) {
+  return s.trim().toLowerCase().replace(/\s+/g,' ').replace(/ё/g,'е');
+}
+
+function checkAnswer() {
+  const input = normalize(answerEl.value);
+  if (!input) return;
+  const t = tasks[current];
+  const correct = t.a.map(normalize);
+  if (correct.includes(input)) {
+    // Показываем первый (основной) вариант ответа
+    onCorrect(t.a[0]);
+  } else {
+    onWrong();
+  }
+}
+
+function onCorrect(text) {
+  score++;
+  scoreEl.textContent = score;
+  showFeedback('✨ ВЕРНО ✨', 'good');
+  fallingWord(text);
+  burstBubbles();
+  setTimeout(() => {
+    current++;
+    showTask();
+  }, 1300);
+}
+
+function onWrong() {
+  showFeedback('💥 ОШИБКА 💥', 'bad');
+  shakeScreen();
+  explode();
+  answerEl.value = '';
+  answerEl.focus();
+}
+
+function showFeedback(text, type) {
+  feedbackEl.textContent = text;
+  feedbackEl.className = 'feedback show ' + type;
+  setTimeout(() => feedbackEl.className = 'feedback', 1200);
+}
+
+function fallingWord(text) {
+  const el = document.createElement('div');
+  el.className = 'falling';
+  el.textContent = text;
+  gameEl.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
+}
+
+function shakeScreen() {
+  gameEl.classList.add('shake');
+  setTimeout(() => gameEl.classList.remove('shake'), 500);
+}
+
+function explode() {
+  const wrap = document.querySelector('.cauldron-wrap');
+  const rect = wrap.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + 40;
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 80 + Math.random() * 120;
+    p.style.left = cx + 'px';
+    p.style.top = cy + 'px';
+    p.style.setProperty('--dx', Math.cos(angle)*dist + 'px');
+    p.style.setProperty('--dy', Math.sin(angle)*dist + 'px');
+    p.style.background = ['#ff3355','#ff6600','#ffaa00','#ff0066'][Math.floor(Math.random()*4)];
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1000);
+  }
+}
+
+function endGame() {
+  const end = document.getElementById('endScreen');
+  document.getElementById('endText').textContent =
+    `Вы сварили великое зелье! Итог: ${score} из 40 ингредиентов.`;
+  end.style.display = 'flex';
+}
+
+// Пузырьки
+const bubblesEl = document.getElementById('bubbles');
+function spawnBubble() {
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  const size = 6 + Math.random() * 14;
+  b.style.width = size + 'px';
+  b.style.height = size + 'px';
+  b.style.left = (20 + Math.random() * 240) + 'px';
+  b.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+  bubblesEl.appendChild(b);
+  setTimeout(() => b.remove(), 4000);
+}
+setInterval(spawnBubble, 250);
+
+// Пар
+const steamEl = document.getElementById('steam');
+function spawnSteam() {
+  const s = document.createElement('div');
+  s.className = 'steam-puff';
+  s.style.left = (40 + Math.random() * 120) + 'px';
+  s.style.animationDuration = (3 + Math.random() * 2) + 's';
+  steamEl.appendChild(s);
+  setTimeout(() => s.remove(), 5000);
+}
+setInterval(spawnSteam, 600);
+
+function burstBubbles() {
+  for (let i = 0; i < 15; i++) setTimeout(spawnBubble, i * 50);
+}
+
+document.getElementById('submit').addEventListener('click', checkAnswer);
+answerEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkAnswer();
+});
+
+showTask();
+</script>
+</body>
+</html>
